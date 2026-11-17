@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-konspekt"
+version = "0.1.0"
+description = "Sequential visual video summarization"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=1.26,<3",
+    "opencv-python>=4.9,<5",
+    "Pillow>=10,<13",
+    "scenedetect>=0.6.7,<0.7",
+    "threadpoolctl>=3.5,<4",
+    "torch>=2.6,<3",
+    "transformers>=4.49,<5",
+]
+
+[project.scripts]
+video-konspekt = "video_konspekt.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
