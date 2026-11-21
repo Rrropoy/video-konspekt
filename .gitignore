@@ -10,3 +10,4 @@ dist/
 *.mkv
 *.webm
 *.timings.json
+.DS_Store

@@ -33,6 +33,10 @@ def main() -> int:
         "--scene-threshold", type=positive_float, default=27.0,
         help="scene change threshold",
     )
+    parser.add_argument(
+        "--workers", type=positive_int, default=1,
+        help="number of CPU workers (default: 1)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="random seed for k-means")
     parser.add_argument(
         "--model", default="openai/clip-vit-base-patch32",
@@ -54,6 +58,7 @@ def main() -> int:
         report, count = summarize(
             source, output, count=args.clips, clip_seconds=args.clip_seconds,
             threshold=args.scene_threshold, seed=args.seed, model=args.model,
+            workers=args.workers,
         )
     except (ImportError, OSError, RuntimeError, ValueError) as error:
         print(f"Error: {error}", file=sys.stderr)

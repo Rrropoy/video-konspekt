@@ -1,15 +1,16 @@
 import json
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing, nullcontext
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import perf_counter
 
 import cv2
-import numpy as np
 import torch
 from threadpoolctl import threadpool_limits
 
 from .clustering import fit_kmeans, select_representatives
-from .embeddings import SceneEncoder
+from .embeddings import SceneEncoder, encode_scenes
 from .export import Clip, export_summary, find_tools
 from .scenes import Scene, detect_scenes, iter_keyframes
 
@@ -29,7 +30,10 @@ def summarize(
     threshold: float,
     seed: int,
     model: str,
+    workers: int = 1,
 ) -> tuple[Path, int]:
+    if workers < 1:
+        raise ValueError("Workers must be greater than zero.")
     report_path = output.with_suffix(".timings.json")
     ffmpeg, ffprobe = find_tools()
     if not source.is_file():
@@ -52,11 +56,22 @@ def summarize(
         encoder = SceneEncoder(model)
         timings["model_loading"] = perf_counter() - start
 
-        start = perf_counter()
-        vectors = np.stack([
-            encoder.encode(frames) for frames in iter_keyframes(source, scenes)
-        ])
-        timings["keyframes_and_embeddings"] = perf_counter() - start
+        active_workers = min(workers, len(scenes))
+        pool = (
+            ThreadPoolExecutor(
+                max_workers=active_workers,
+                initializer=getattr(torch, "init_num_threads", None),
+            )
+            if active_workers > 1
+            else nullcontext()
+        )
+        with pool as executor:
+            start = perf_counter()
+            with closing(iter_keyframes(source, scenes)) as keyframes:
+                vectors = encode_scenes(
+                    encoder, keyframes, executor=executor, workers=active_workers
+                )
+            timings["keyframes_and_embeddings"] = perf_counter() - start
 
         start = perf_counter()
         centers, labels = fit_kmeans(vectors, count, seed)
@@ -86,6 +101,8 @@ def summarize(
                 "clip_seconds": clip_seconds,
                 "scene_threshold": threshold,
                 "seed": seed,
+                "workers": workers,
+                "active_workers": active_workers,
                 "selected_clips": [
                     {
                         "scene_index": index,
