@@ -12,16 +12,16 @@
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install "torch>=2.6,<3" --index-url https://download.pytorch.org/whl/cpu
 .\.venv\Scripts\python.exe -m pip install -e .
-.\.venv\Scripts\python.exe -m video_konspekt "input.mp4" -o "summary.mp4" --clips 8 --clip-seconds 5
+.\.venv\Scripts\python.exe -m video_konspekt "input.mp4" -o "summary.mp4" --clips 8 --clip-seconds 5 --workers 4
 ```
 
 При первом запуске нужен интернет для загрузки CLIP. Если модель уже скачана, укажите её папку через `--model`.
 
-В примере `--clips 8` задаёт до восьми фрагментов, а `--clip-seconds 5` ограничивает каждый пятью секундами. Все параметры доступны через `--help`.
+В примере `--clips 8` задаёт до восьми фрагментов, а `--clip-seconds 5` ограничивает каждый пятью секундами. Параметр `--workers` задаёт число потоков CPU для обработки сцен, кластеризации и отбора фрагментов. По умолчанию используется один поток. Все параметры доступны через `--help`.
 
 ## Результат
 
 - `summary.mp4` — нарезка с первой аудиодорожкой исходного видео, если она есть.
-- `summary.timings.json` — таймкоды выбранных фрагментов в исходном видео и время обработки.
+- `summary.timings.json` — таймкоды выбранных фрагментов в исходном видео и время обработки по этапам.
 
 Если файлы уже существуют, задайте новое имя через `-o`.

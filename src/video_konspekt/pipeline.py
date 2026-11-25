@@ -73,15 +73,17 @@ def summarize(
                 )
             timings["keyframes_and_embeddings"] = perf_counter() - start
 
-        start = perf_counter()
-        centers, labels = fit_kmeans(vectors, count, seed)
-        timings["clustering"] = perf_counter() - start
+            start = perf_counter()
+            centers, labels = fit_kmeans(
+                vectors, count, seed, executor=executor, workers=active_workers
+            )
+            timings["clustering"] = perf_counter() - start
 
-        start = perf_counter()
-        selected = select_representatives(vectors, centers, labels)
-        frame_limit = max(1, int(clip_seconds * fps))
-        clips = [clip_from_scene(scenes[index], frame_limit) for index in selected]
-        timings["representative_selection"] = perf_counter() - start
+            start = perf_counter()
+            selected = select_representatives(vectors, centers, labels, executor=executor)
+            frame_limit = max(1, int(clip_seconds * fps))
+            clips = [clip_from_scene(scenes[index], frame_limit) for index in selected]
+            timings["representative_selection"] = perf_counter() - start
 
         with TemporaryDirectory(prefix=".video-konspekt-", dir=output.parent) as temp:
             staged_video = Path(temp) / "summary.mp4"
